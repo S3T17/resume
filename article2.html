@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="stylesheet" href="assets/css/styles.css">
+        <link rel="stylesheet" href="assets/css/styles2.css">
+        <link rel="stylesheet" href="assets/css/font.css">
+
+        <!-- =====CDN CSS===== -->
+        <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
+        <link rel="stylesheet" href="https://cdn.lineicons.com/2.0/LineIcons.css">
+        <title>Handling and Avoiding Conflicts in Git</title>
+    </head>
+    <body>
+        <!--===== HEADER =====-->
+        <header class="l-header">
+            <nav class="nav bd-grid">
+                <div>
+                    <a href="#" class="nav__logo">S3T17</a>
+                </div>
+
+                <div class="nav__menu" id="nav-menu">
+                    <ul class="nav__list">
+                        <li class="nav__item"><a href="#home" class="nav__link">Home</a></li>
+                        <li class="nav__item"><a href="#blog" class="nav__link active">Blog</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav__toggle" id="nav-toggle">
+                    <i class='bx bx-menu'></i>
+                </div>
+            </nav>
+        </header>
+
+        <main class="l-main">
+            <section class="py-16">
+                <div class="max-w-xl md:max-w-2xl xl:max-w-3xl mx-auto px-6 sm:px-12 pt-16">
+                    <header>
+                    <div class="mx-auto pattern-diagonal-lines-sm text-indigo-200 overflow-hidden md:overflow-visible">
+                        <img src="https://i.ibb.co/6nt4p13/2020-12-15-052035-1280x800-scrot.png?&amp;auto=format&amp;fit=crop&amp;w=1350&amp;q=80" class="transform translate-x-4 -translate-y-4 g-image" alt="2020-12-15-052035-1280x800-scrot" border="0" >
+                    </div>
+                        <div class="font-mono text-lg text-gray-600 mb-2 mt-12"><ul>
+                        <li class="inline"><time datetime="2020-05-20 10:00:00" class="capitalize">15 Desembar, 2020</time> — </li>
+                        <li class="inline">
+                            <ul class="inline"><li class="inline"><a href="#"> Productivity ·</a></li>
+                                <li class="inline"><a href="#"> Tips ·</a></li>
+                                <li class="inline"><a href="#"> Bash </a></li></li>
+                            </ul>
+                        </div>
+    
+                        <h1 class="text-3xl sm:text-5xl font-serif leading-tight font-bold mb-2 text-indigo-900 tracking-tighter">Handling and Avoiding Conflicts in Git</h1>
+                        <div class="flex flex-row items-center py-4">
+                            <img src="https://i.ibb.co/F3NBTRB/photo-2020-02-24-06-15-49.jpg" alt class="rounded-full w-8 h-8 mr-4">
+                            <a href="/blog" class="text-lg text-gray-700">Amiya</a>
+                        </div>
+                    </header>
+                    <article class="pt-8"><!---->
+                    <div class="pb-10 markdown text-lg leading-normal text-gray-700">
+            <p>If you operate on the command line, you will find that there are several commands that you use over and over again. While the makers of many of the most common command utilities have attempted to eliminate extraneous typing by using shortened names (e.g. <code class="shiki-inline" style="background: #2e3440; color: #d8dee9">ls</code> instead of <code class="shiki-inline" style="background: #2e3440; color: #d8dee9">list</code> and <code class="shiki-inline" style="background: #2e3440; color: #d8dee9">cd</code> instead of <code class="shiki-inline" style="background: #2e3440; color: #d8dee9">change-directory</code>), however these are not ubiquitous.</p>
+
+   <p>John Kelvie said:</p>
+
+    <blockquote>
+    <p>[To] me the fundamental challenge with existing version control
+    systems is the difficulty of merging change sets from multiple
+    developers across the same set of code. To me, this issue comes down
+    to the diffing/merging functionality provided by the software, and I
+    haven&rsquo;t seen or heard of anything that really improves the state of
+    the art. How does GIT address this? How does it make it easier to do?
+    Are there specific branching and merging tools it provides? Is through
+    the use of more atomic commits (which I could see helping to an
+    extent, but only so far as it allows for changes to be small enough
+    that there is no overlap, thus sidestepping the problem).</p>
+    </blockquote>
+    
+    <p>There are two concepts that you must understand to really take advantage
+    of git. The first is the index / staging area. A full description would
+    require its own post but for this discussion you can think of it as a
+    temporary branch where you put everything before committing it. You can
+    diff between it and the last commit, between it and the working
+    directory, etc. The second is that a git repo can have (and usually
+    does) have multiple branches in the same location on disk.</p>
+    
+    <p>The idea of
+    multiple branches in the same folder, is critical to understand when
+    trying to address conflicts. In most version control systems you have
+    one checkout for every branch, each in a different location on your
+    disk, and while this is an option in git, you can also have multiple
+    branches in the same folder, just like the server side of most version
+    control systems.</p>
+    
+    <p>So, we&rsquo;re going to need an example. Let&rsquo;s assume I&rsquo;ve
+    got a git repo with foo.rb. <strong>In the master branch</strong> foo.rb looks like
+    this:</p>
+    
+    <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">if (value == &quot;test&quot;) puts &quot;I'm in!&quot;
+    end
+    </code></pre>
+    
+    <p>On <strong>branch_one</strong> we&rsquo;ll change that test to</p>
+    
+    <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">if (value == TEST\_CONSTANT) 
+    </code></pre>
+    
+    <p>and on <strong>branch_two</strong> we&rsquo;ll make it</p>
+    
+    <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">if (value ==&quot;test&quot; || value == &quot;test2&quot;)
+    </code></pre>
+    
+    <p>Now, if master, branch_one,
+    and branch_two are all in the same repo we could stay in the same
+    directory and &ldquo;checkout&rdquo; whichever branch we wanted to be working on.
+    All the would change in place without you ever leaving the directory.
+    So, if you checkout master and cat foo.rb you&rsquo;ll get the first example.
+    Checkout branch_two and cat foo.rb (without changing directories) and
+    you&rsquo;ll see the last example. I&rsquo;m sorry if that was obvious, but it&rsquo;s
+    critical that you understand that, and some newbs just aren&rsquo;t aware of
+    it yet.</p>
+    
+    <p>So, back to John&rsquo;s questions. How does git make branching and
+    merging easier to do, and does it provide any specific tools for
+    managing it? Well, first off the commands are freaking simple:</p>
+    
+    <ul>
+    <li>to create a branch in the same repo git branch branch_name or, more
+    commonly git checkout -b branch_name The latter creates the branch
+    then checks it out so you can immediately start working on it.</li>
+    <li>to merge in a branch in the same repo git merge branch_name</li>
+    <li>to merge in a branch from a remote repo you&rsquo;ve got git fetch and git
+    pull More on these two in a minute, because they do dramatically
+    change how you manage conflicts.</li>
+    </ul>
+    
+    <p>As for specific tools for managing it. Yes and no. &ldquo;&hellip;if you rather use
+    GUI tools to merge files instead of editing file with conflict markers
+    (like shown in example), you can use git-mergetool, which would call GUI
+    tool of your choice; currently supported out of the box are: kdiff3,
+    tkdiff, meld, xxdiff, emerge, vimdiff, gvimdiff, ecmerge, and opendiff.&rdquo;
+    BUT, regardless of GUI tools, the ability to have multiple branches in
+    the same local repo changes everything.</p>
+    
+    <p>Here&rsquo;s an example. Same files as
+    above, except I&rsquo;m using a different repo for each instead of different
+    branches in the same repo, because that&rsquo;s the way it would be when
+    pulling from other people, and since we&rsquo;re dealing with people, we&rsquo;ll
+    say branch_one is Mary&rsquo;s branch and branch_two is Bob&rsquo;s (pretend that
+    the. The first thing you&rsquo;d do if you were pulling from these guys
+    regularly is to add them to your repos list of remote directories</p>
+    
+    <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF"><code>$ git remote add marys\_branch ../branch\_one/
+    $ git remote add bobs\_branch ../branch\_two/ 
+    $ git remote show bobs\_branch marys\_branch
+    </code></pre>
+    <p>And here&rsquo;s where the difference
+        between pull and fetch come in to play. fetch tells git &ldquo;hey, go get
+        this remote data, and shove it into a &ldquo;remote&rdquo; branch <em>in my repo</em>. pull
+        says, &ldquo;fetch it, and <em>also</em> merge it with my current branch.&rdquo; Using
+        fetch we can suck in data from two sources, knowing full well it would
+        conflict if we tried to merge it, but still have no problems.</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">$ git remote update
+        Updating marys_branch
+        remote: Counting objects: 5, done.
+        remote: Total 3 (delta 0), reused 0 (delta 0)
+        Unpacking objects: 100% (3/3), done.
+        From ../branch_one
+        * [new branch] master -&gt; marys_branch/master
+        Updating bobs_branch
+        remote: Counting objects: 5, done.
+        remote: Compressing objects: 100% (2/2), done.
+        remote: Total 3 (delta 0), remote: reused 0 (delta 0)
+        Unpacking objects: 100% (3/3), done.
+        From ../branch_two
+        * [new branch] master -&gt; bobs_branch/master
+        
+        $ cat foo.rb
+        if (value == &quot;test&quot;)
+        puts &quot;I'm in!&quot;
+        end
+        </code></pre>
+        
+        <p>So, now, we&rsquo;ve pulled in two people&rsquo;s
+        conflicting changes, but not applied either. So, lets assume I don&rsquo;t
+        suspect a conflict (hopefully they&rsquo;re not normal occourrances for you).</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">$ git merge marys_branch/master
+        Updating 7d6f564..5713885
+        Fast forward
+        foo.rb | 2 +-
+        1 files changed, 1 insertions(+), 1 deletions(-)
+        
+        $ git merge bobs_branch/master
+        Auto-merged foo.rb
+        CONFLICT (content): Merge conflict in foo.rb
+        Automatic merge failed; fix conflicts and then commit the result.
+        </code></pre>
+        
+        <p>Damn, a conflict! Who would have guessed? Now, I do
+        what git suggests, fix the problem and commit it, but I&rsquo;m neither the
+        one who broke it nor the one who knows most about it. So, I&rsquo;m going to
+        kick this back to Bob or Mary, but, I may want to see what&rsquo;s going on,
+        to help choose who to kick this to.</p>
+        
+        <p>One thing I can do is see
+        specifically which commits are conflicting:</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">$ git log --merge
+        commit f068f89e88e9174b50a0bc5622875dd4d8e21bc8
+        Author: Kay Rhodes
+        Date: Sat Jul 12 09:26:44 2008 -0400
+        
+        switched to testing for test or test2 in branch_two
+        
+        commit 5713885c9adc5689b6d8222b2650d4b3ad0dbc42
+        Author: Kay Rhodes
+        Date: Sat Jul 12 09:25:52 2008 -0400
+        
+        switch test to TEST_CONSTANT on branch_one
+        </code></pre>
+        
+        <p>If the commit messages aren&rsquo;t enough info I can
+        actually diff the two branches that conflicted totally separately from
+        anything in MY branch.</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">$ git diff marys_branch/master bobs_branch/master
+        diff --git a/foo.rb b/foo.rb
+        index dac3b0f..220011b 100644
+        --- a/foo.rb
+        +++ b/foo.rb
+        @@ -1,3 +1,3 @@
+        -if (value == TEST_CONSTANT)
+        +if (value == &quot;test&quot; || value == &quot;test2&quot;)
+        puts &quot;I'm in!&quot;
+        end
+        </code></pre>
+        
+        <p>I could have also diffed the specific
+        commits in conflict if I&rsquo;d wanted, instead of the entire branches. In
+        this case it would give the same result. But, not knowing what
+        TEST_CONSTANT is (maybe it&rsquo;s a closure, maybe it&rsquo;s a predefined
+        variable) I can either make an educated guess that whatever
+        TEST_CONSTANT is it&rsquo;s probably a better choice from a maintenance
+        perspective and tell Bob to go fix his stuff. Or, I could just send an
+        e-mail to both of them and let them figure it out.</p>
+        
+        <p>It&rsquo;s also important
+        to point out that the &ldquo;index in git contains on conflict *all*
+        versions of a file: &lsquo;ours&rsquo; i.e. the version in the branch you merge
+        into, &lsquo;theirs&rsquo; i.e. the version in the branch you are merging, and
+        &lsquo;base&rsquo; i.e. the version in the common ancestor ot the branches, and also
+        version with conflict markers.&rdquo;</p>
+        
+        <p>Another option is to just fix it myself.
+        The conflicting file currently looks like this:</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD:foo.rb
+        
+        if (value == TEST_CONSTANT)
+        =======
+        if (value == &quot;test&quot; || value == &quot;test2&quot;)
+        &gt;&gt;&gt;&gt;&gt;&gt;&gt; bobs_branch/master:foo.rb
+        puts &quot;I'm in!&quot;
+        end 
+        </code></pre>
+        
+        <p>HEAD is git
+        slang for &ldquo;the branch you&rsquo;re currently working on&rdquo; which, in this case,
+        has Mary&rsquo;s changes successfully merged in (actually, by default it&rsquo;s
+        pointing to the last commit on the current branch). So, I decide that
+        all three tests need to be there and make the edit, and then update the
+        index. You need to update the index because git has already added Bob&rsquo;s
+        changes to the index but knows that there was a conflict that needs
+        resolving.</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">$ git status
+        foo.rb: needs merge
+        # On branch master
+        # Changed but not updated:
+        # (use &quot;git add ...&quot; to update what will be committed)
+        #
+        # unmerged: foo.rb
+        #
+        no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)
+        </code></pre>
+        
+        <p>Updating the index is simply a matter of getting the file how you want
+        it and saying:</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">&gt; $ git add foo.rb
+        </code></pre>
+        
+        <p>at which point committing would get you a commit message template that
+        started like this:</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">&gt; Merge commit 'bobs\_branch/master' Conflicts: foo.rb \# \# It looks
+        &gt; like you may be committing a MERGE. \# If this is not correct, please
+        &gt; remove the file \# /Users/krhodes/temp/trunk/.git/MERGE\_HEAD \# and
+        &gt; try again. \#
+        </code></pre>
+        
+        <p>The basic take-away from all this fetch / pull stuff is that it&rsquo;s
+        generally a good idea to fetch first when dealing with other people&rsquo;s
+        work, because having a local copy of their branch in your repo gives you
+        a number of additional options if things go wrong.</p>
+        
+        <p>And yes, atomic
+        commits go a huge way towards avoiding the problem of conflicts, and
+        handling them when they crop up. Obviously this applies to centralized
+        systems too. They avoid them by keeping your commits on topic. If one
+        commit is for bug X you generally don&rsquo;t have to worry about it
+        conflicting with a commit for bug Y. And, when you discover that two
+        people you&rsquo;re pulling from both have patches for bug X that conflict you
+        have many more options.</p>
+        
+        <p>Another key technique for avoiding conflicts is
+        to merge constantly. Every single day you should be pulling any work
+        that&rsquo;s been committed upstream. That way, when things do conflict, you
+        only have to resolve a little tiny thing (if the commits are atomic then
+        it&rsquo;s even tinier), and, if you choose to kick the issue back to someone
+        else it&rsquo;s still fresh in their heads. This, of course, applies to
+        centralized systems to.</p>
+        
+        <p>Another way that git (and every other
+        distributed system) helps to avoid conflicts is a social change that
+        comes out of the distributed nature of the repos. Because you&rsquo;re
+        constantly pulling in from multiple sources, having atomic commits
+        becomes a requirement to participation. If Bob is a twit and only makes
+        massive sprawling commits you&rsquo;re simply not going to pull from him. It&rsquo;s
+        not like a centralized system where you&rsquo;re forced to take all the
+        changes out there. Whoever is in charge of the main trunk would be
+        stupid to accept Bob&rsquo;s changes because if there was a problem in one of
+        them it&rsquo;d be a pain in the butt to extract the bits that fixed bug A
+        from the bits that didn&rsquo;t really fix bug B. No, they&rsquo;d kick it back to
+        Bob, telling him to clean up his stuff and make two separate patches.</p>
+        
+        <p>This becomes even more important when you&rsquo;re working on a project that
+        manages patches via e-mail. Just check out the git mailing list.
+        People&rsquo;s patches are incredibly focused, enabling other git developers
+        to take just the bits and pieces they choose. Because the patches are
+        uniquely identifiable in git, it doesn&rsquo;t matter if some people take a
+        change and some don&rsquo;t and you, as the maintainer, pull from all of them.
+        Git won&rsquo;t think they&rsquo;re two different but identical changes. It&rsquo;ll know,
+        &ldquo;Oh, that&rsquo;s change x. I&rsquo;ve got that already.&rdquo; Git also doesn&rsquo;t care how
+        a patch got there. It could be from a commit you pulled over the lan, or
+        something someone e-mailed. Because it&rsquo;s guaranteed cryptographically
+        unique, it&rsquo;s the same thing.</p>
+        
+        <p>[Update 2] Some additional tips f#        Narebski</p>
+        
+        <p>If you want to see what some file looks like on other branch
+        (or for example at specified point of time, for example at tagged
+        revision, marking some released version), you don’t need to use “git
+        checkout ‘branch’ &amp;&amp; cat ‘file’”; you can use “git show ‘branch’:&lsquo;file’”
+        (see “Examples” section in git-show(1) manpage, and “Specifying
+        revisions” section in git-rev-parse(1) manpage).</p>
+        
+        <p>Below there is example
+        how index looks like during conflicted merge. The example uses yet
+        another way of specifying object names, i.e. “:’stage’:&lsquo;file’” (we could
+        alternatively use SHA-1 or shortened SHA-1 of object shown in
+        git-ls-files output, e.g. “git show 2f096cc”).</p>
+        
+        <pre class="shiki" style="background-color: #1f1f1f"><span style="color: #79B8FF">$ git ls-files –abbrev –unmerged
+        100644 2f096cc 1 foo.rb
+        100644 89f36fe 2 foo.rb
+        100644 d3ea75d 3 foo.rb
+        $ git show :1:foo.rb
+        if (value == “test”)
+        puts “I’m in!”
+        end
+        $ git show :2:foo.rb
+        if (value == TEST_CONSTANT)
+        puts “I’m in!”
+        end
+        $ git show :3:foo.rb
+        if (value == “test” || value == “test2″)
+        puts “I’m in!”
+        end 
+        </code></span></pre>
+        
+        <p><strong>Try it yourself!</strong><br />
+        I find that reading how to do things like this is much enhanced by actually
+        having something to test it on, especially when there are so many
+        variables. So, I&rsquo;ve uploaded <a href="http://s3.amazonaws.com/mobtvse_masukomi/assets/2008/07/temp.tgz" title="a temp dir with the three repos">the temp dir with the three
+        repos</a>
+        I used in writing this. If you go into the trunk repo you&rsquo;ll see that
+        the other ones have already been configured as remote repos. And, if you
+        go into branch_one or branch_two you&rsquo;ll see that they&rsquo;re clones of
+        trunk and thus both already know that their upstream is trunk and how to
+        fetch from it without having to configure anything. You can also see
+        what the difference would be in pulling and fetching from one of them.</p>
+        
+        <p>Please let me know if there&rsquo;s still something that&rsquo;s a little unclear
+        about dealing with conflicts in git and I&rsquo;ll add it in.</p>
+                       
+                </main>
+        <!--===== FOOTER =====-->
+        <footer class="footer">
+            <p class="footer__title">S3T17</p>
+            <div class="footer__social">
+                <a class="footer__icon" href="https://t.me/S3T17" ><i class='bx bxl-telegram'></i></a>
+                <a class="footer__icon" href="https://www.facebook.com/muhammad.setya.77" target="_blank"><i class="lni lni-facebook-filled"></i></a>
+                <a class="footer__icon" href="https://twitter.com/SetyaUtsugi" target="_blank"><i class="lni lni-twitter-original"></i></a>
+                <a class="footer__icon" href="https://www.instagram.com/setya_1899" target="_blank"><i class="lni lni-instagram-original"></i></a>
+            </div>
+            <p>&#169; 2020 copyright all right reserved</p>
+        </footer>
+
+
+        <!--===== SCROLL REVEAL =====-->
+        <script src="https://unpkg.com/scrollreveal"></script>
+
+        <!--===== MAIN JS =====-->
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
